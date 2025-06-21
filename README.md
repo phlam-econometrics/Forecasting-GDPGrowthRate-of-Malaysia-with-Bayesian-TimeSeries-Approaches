@@ -1,6 +1,3 @@
-# Title of Research Project
-Forecasting GDP Growth Rate of Malaysia with Bayesian Time Series Approaches: From 2025 Q2 to 2027 Q4
-
 # Abstract
 This project is for forecasting the 2025 Q2 to 2027 Q4 GDP growth rate of Malaysia.
 
