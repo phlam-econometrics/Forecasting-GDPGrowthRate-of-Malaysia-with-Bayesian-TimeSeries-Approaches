@@ -38,7 +38,7 @@ According to the observation in seasonal differenced ACF and PACF, ACF is showin
 
 A Bayesian auto SARIMAX and a Bayesian manual SARIMAX process will be applied, X is the exogenous data (i.e. Cleaned data of net export data quarterly).<br/>
 
-First, for Bayesian auto SARIMAX, with auto.arima process, the optimal result is p=4 and q=0.<br/>
+First, for Bayesian auto SARIMAX, with <code>auto.arima</code> process, the optimal result is p=4 and q=0.<br/>
 
 Iterate 10000 times for a more accurate result<br/>
 
