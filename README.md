@@ -99,8 +99,8 @@ Although the model predicted the GDP growth rate only have slight differences co
 
 ## References
 
-https://data.gov.my/data-catalogue/gdp_qtr_real?series=growth-qoq&visual=value <br/>
+Government of Malaysia. (n.d.). Real GDP | data.gov.my. data.gov.my. https://data.gov.my/data-catalogue/gdp_qtr_real?series=growth-qoq&visual=value <br/>
 
-https://data.gov.my/data-catalogue/trade_sitc_1d?visual=table <br/>
+Government of Malaysia. (n.d.). Monthly trade by SITC section | data.gov.my. data.gov.my. https://data.gov.my/data-catalogue/trade_sitc_1d?visual=table <br/>
 
 Pakasa, U. I., Yacob, Y., Lajuni, N., Abdillah, D. S. Z. A., & Chiat, L. W. (2023). The Impact of Domestic and External Demand Factors on Malaysia Economic Growth. International Journal of Academic Research in Business and Social Sciences, 12(1), 1057 – 1067.
