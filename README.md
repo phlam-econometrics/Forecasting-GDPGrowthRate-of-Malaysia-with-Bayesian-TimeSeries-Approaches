@@ -1,7 +1,5 @@
 # Forecasting GDP Growth Rate of Malaysia with Bayesian Time Series Approaches: From 2025 Q2 to 2027 Q4
 
-
-
 ## Abstract
 This project is for forecasting the 2025 Q2 to 2027 Q4 GDP growth rate of Malaysia.
 
@@ -9,9 +7,12 @@ This project is for forecasting the 2025 Q2 to 2027 Q4 GDP growth rate of Malays
 The project analysed the data of Malaysia's GDP growth rate from 2015 Q2 to 2025 Q1 and forecast the GDP growth rate of Malaysia from 2025 Q2 to 2027 Q4 with Bayesian time series approaches.
 
 ## Data Source
-Series: Rate of Quarterly GDP Growth & Monthly Trade by SITC Section <br/>
+Series: Rate of Quarterly GDP Growth[^1] & Monthly Trade by SITC Section[^2] <br/>
 Period: 2015 Q2 to 2025 Q1 <br/>
 Source: Malaysia's Official Open Data Portal
+
+[^1]: Government of Malaysia. (n.d.). Real GDP | data.gov.my. data.gov.my. https://data.gov.my/data-catalogue/gdp_qtr_real?series=growth-qoq&visual=value <br/>
+[^2]: Government of Malaysia. (n.d.). Monthly trade by SITC section | data.gov.my. data.gov.my. https://data.gov.my/data-catalogue/trade_sitc_1d?visual=table
 
 ## Literature Review 
 
