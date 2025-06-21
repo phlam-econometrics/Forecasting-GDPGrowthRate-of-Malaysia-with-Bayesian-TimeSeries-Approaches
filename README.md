@@ -27,7 +27,7 @@ The Augmented Dickey-Fuller Test and Seasonally Differenced Augmented Dickey-Ful
 
 Examined Autocorrelation Function and Partial Autocorrelation Function with the original cleaned data and the differenced-4-lags data. <br/>
 
-![Figure 1](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/Malaysia%20GDP%20Forecast/output/figures/ACF_PACF_Plots.png)<br/>
+![Figure 1](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/GDP%20Growth%20Rate%20Forecast/output/figures/ACF_PACF_Plots.png)<br/>
 
 According to the observation in seasonal differenced ACF and PACF, ACF is showing cuts off patterns (i.e. Spikes at lag 5 for ACF), but the PACF is seasonal significant, suggested that our model is a SARIMA process.<br/>
 
@@ -63,7 +63,7 @@ According to the result, since Bayesian Holt-Winters p value is lower than 0.05,
 
 In this circumstance, Bayesian SARIMAX will be a better method to forecast the GDP growth rate.<br/>
 
-![Figure 2](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/Malaysia%20GDP%20Forecast/output/figures/Model_Diagnostics.png)<br/>
+![Figure 2](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/GDP%20Growth%20Rate%20Forecast/output/figures/Model_Diagnostics.png)<br/>
 
 According to the QQ plot, it is observed that the prediction is reliable since the points are fall on straight line, proved the data set have a high confidence, avoided skewed datapoint and errors.
 
@@ -73,7 +73,7 @@ According to the export/import data of Malaysia, the manufacturing industry incl
 
 Which might implies that in Malaysia, some seasons are not producing those products with reason such as shut down the massive machines for maintanence, except for the basic food, beverage factories maintain producing.<br/>
 
-![Figure 3](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/Malaysia%20GDP%20Forecast/output/figures/GDP_Forecast_Comparison.png)<br/>
+![Figure 3](https://github.com/phlam-econometrics/Forecasting_GDP_Growth_Rate_of_Malaysia/blob/main/GDP%20Growth%20Rate%20Forecast/output/figures/GDP_Forecast_Comparison.png)<br/>
 
 With the historical data, the forecast of coming 11 lags (i.e. 11 quarters) show that the GDP growth rate of Malaysia will oscillate according to the Bayesian Holt-Winter and Bayesian auto/manual SARIMAX.<br/>
 
