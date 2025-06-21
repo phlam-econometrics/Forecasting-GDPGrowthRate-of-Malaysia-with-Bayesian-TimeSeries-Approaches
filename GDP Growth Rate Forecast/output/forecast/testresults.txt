@@ -1,0 +1,11 @@
+# Stationarity Tests
+ADF Test - Original GDP: p-value = 0.2328943 
+ADF Test - Seasonally Differenced GDP: p-value = 0.02259342 
+
+# Ljung-Box Test Results
+Bayesian Holt-Winters: p-value = 0.0002777423 
+Auto-SARIMAX: p-value = 0.9571178
+Manual-SARIMAX: p-value = 0.1002555 
+
+# Model Orders
+Auto-SARIMAX: p = 4 q = 0 

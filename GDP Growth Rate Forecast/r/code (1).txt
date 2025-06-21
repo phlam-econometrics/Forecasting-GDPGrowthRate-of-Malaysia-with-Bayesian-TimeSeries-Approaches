@@ -1,0 +1,403 @@
+# Academic Integrity Declaration
+This research code utilizes partial AI assistance. All substantive decisions, validations, and interpretations remain the author's original work.  
+
+AI usage limited to:  
+- Partial syntax generation
+- Debugging assistance
+
+Human authorship components include:  
+1. Research design & methodological choices  
+2. Data integration pipeline  
+3. Model specification/validation  
+4. Economic interpretation 
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Libraries
+library(forecast)
+library(brms)
+library(ggplot2)
+library(dplyr)
+library(ggpubr)
+library(ggfortify)
+library(tseries)
+library(bsts)  # Add bsts for Bayesian structural time series
+
+# Data
+gdp_data <- data.frame(
+    date = as.Date(c("2015-04-01", "2015-07-01", "2015-10-01", "2016-01-01", "2016-04-01", "2016-07-01",
+                     "2016-10-01", "2017-01-01", "2017-04-01", "2017-07-01", "2017-10-01", "2018-01-01",
+                     "2018-04-01", "2018-07-01", "2018-10-01", "2019-01-01", "2019-04-01", "2019-07-01",
+                     "2019-10-01", "2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01", "2021-01-01",
+                     "2021-04-01", "2021-07-01", "2021-10-01", "2022-01-01", "2022-04-01", "2022-07-01",
+                     "2022-10-01", "2023-01-01", "2023-04-01", "2023-07-01", "2023-10-01", "2024-01-01",
+                     "2024-04-01", "2024-07-01", "2024-10-01", "2025-01-01")),
+    GDP_Growth = c(2.4, 3.1, 3.3, -4.4, 2.3, 3.5, 3.5, -3.6, 2.4, 3.9, 3.2, -4.1, 1.9, 3.7, 3.4, -4.2, 2.2, 3.2,
+                   2.6, -7, -15.7, 21.1, 1.9, -4.1, -1.7, -0.2, 10.1, -2.7, 2.2, 4.7, 3.1, -4.3, -0.7, 5.1, 2.9,
+                   -3, 1, 4.7, 2.4, -3.5),
+    Net_Export = c(6339043052, 2488738343, 12105623581, 5395610547, 9033564486, 2099699410, 9882184899, 4869849374,
+                   9032690946, 8158250852, 10011062868, 10051055348, 13262856637, 8125488012, 16851564632, 12419153174,
+                   11851049350, 15968588521, 17572174020, 12038556025, -4464527969, 25257833767, 22259234585, 16619066128,
+                   20337718500, 13560315006, 26582669376, 18237534955, 23375406776, 15838782521, 18459100447, 18157181253,
+                   11345097074, 17307158337, 12964421288, 10172514788, 7741657555, 26112073239, 11869404948, 3658925286)
+)
+
+# Time Series
+malaysia_ts <- ts(gdp_data$GDP_Growth, frequency = 4, start = c(2015, 2))
+
+# Seasonal differencing (lag 4)
+gdp_data$GDP_Diff <- c(rep(NA, 4), diff(gdp_data$GDP_Growth, lag = 4))
+gdp_data$NetExport_Diff <- c(rep(NA, 4), diff(gdp_data$Net_Export, lag = 4))
+
+# Stationarity tests - ADF tests
+adf_original <- adf.test(gdp_data$GDP_Growth, k = 4)
+adf_diff <- adf.test(na.omit(gdp_data$GDP_Diff), k = 4)
+
+cat("ADF Test Results:\n")
+cat("Original GDP Series p-value:", adf_original$p.value, "\n")
+cat("Seasonally Differenced GDP p-value:", adf_diff$p.value, "\n\n")
+
+# ACF/PACF plots of differenced time series
+acf_plot <- ggAcf(na.omit(gdp_data$GDP_Diff)) + 
+    ggtitle("ACF of Seasonally Differenced GDP") +
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "white", colour = NA),
+          panel.background = element_rect(fill = "white"))
+
+pacf_plot <- ggPacf(na.omit(gdp_data$GDP_Diff)) + 
+    ggtitle("PACF of Seasonally Differenced GDP") +
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "white", colour = NA),
+          panel.background = element_rect(fill = "white"))
+
+# Save ACF/PACF
+ggsave("ACF_PACF_Plots.png", 
+       ggarrange(acf_plot, pacf_plot, ncol = 2),
+       width = 10, height = 5, bg = "white")
+
+# Data for Bayesian models
+gdp_data_clean <- gdp_data[complete.cases(gdp_data), ]
+
+# Scale variables
+gdp_diff_mean <- mean(gdp_data_clean$GDP_Diff)
+gdp_diff_sd <- sd(gdp_data_clean$GDP_Diff)
+netexport_diff_mean <- mean(gdp_data_clean$NetExport_Diff)
+netexport_diff_sd <- sd(gdp_data_clean$NetExport_Diff)
+
+gdp_data_clean$GDP_scaled <- (gdp_data_clean$GDP_Diff - gdp_diff_mean) / gdp_diff_sd
+gdp_data_clean$NetExport_scaled <- (gdp_data_clean$NetExport_Diff - netexport_diff_mean) / netexport_diff_sd
+
+# Auto-SARIMAX orders from auto.arima
+auto_model <- auto.arima(gdp_data_clean$GDP_scaled, 
+                         xreg = gdp_data_clean$NetExport_scaled,
+                         seasonal = FALSE,
+                         stepwise = FALSE,
+                         approximation = FALSE)
+
+p_order <- auto_model$arma[1]
+q_order <- auto_model$arma[2]
+
+# Handle case where both p and q are zero
+if (p_order == 0 && q_order == 0) {
+    message("Auto.arima selected ARMA(0,0) - using AR(1) instead")
+    p_order <- 1
+    q_order = 0
+}
+
+cat("Auto-SARIMAX Orders: p =", p_order, "q =", q_order, "\n")
+
+# Bayesian Auto-SARIMAX
+bayes_auto <- brm(
+    bf(GDP_scaled ~ arma(p = p_order, q = q_order) + NetExport_scaled),
+    data = gdp_data_clean,
+    prior = c(
+        prior(normal(0, 0.5), class = "b", coef = "NetExport_scaled"),
+        if (p_order > 0) prior(normal(0, 0.3), class = "ar"),
+        if (q_order > 0) prior(normal(0, 0.3), class = "ma"),
+        prior(student_t(3, 0, 1), class = "sigma")
+    ),
+    chains = 2, 
+    iter = 10000, 
+    seed = 123
+)
+
+# Bayesian Manual SARIMAX (AR1)
+bayes_manual <- brm(
+    bf(GDP_scaled ~ arma(p = 1, q = 0) + NetExport_scaled),
+    data = gdp_data_clean,
+    prior = c(
+        prior(normal(0, 0.5), class = "b", coef = "NetExport_scaled"),
+        prior(normal(0, 0.3), class = "ar"),
+        prior(student_t(3, 0, 1), class = "sigma")
+    ),
+    chains = 2, 
+    iter = 10000, 
+    seed = 123
+)
+
+# Bayesian Holt-Winters on differenced data
+# Prepare differenced time series
+diff_ts <- ts(na.omit(gdp_data$GDP_Diff), frequency = 4, start = c(2016, 2))
+
+# Fit Bayesian Structural Time Series model
+ss <- AddLocalLinearTrend(list(), diff_ts)
+bsts_model <- bsts(diff_ts, state.specification = ss, niter = 10000, seed = 123)
+
+# Forecast 11 periods ahead
+bsts_forecast <- predict(bsts_model, horizon = 11)
+
+# Function to integrate forecasts back to original scale
+integrate_forecast <- function(diff_forecast, last_values) {
+    history <- tail(last_values, 4)
+    result <- numeric(length(diff_forecast))
+    for (i in 1:length(diff_forecast)) {
+        next_value <- diff_forecast[i] + history[1]
+        result[i] <- next_value
+        history <- c(history[-1], next_value)
+    }
+    result
+}
+
+# Get point forecast and credible intervals
+last_gdp <- tail(gdp_data$GDP_Growth, 4)
+bsts_point <- integrate_forecast(colMeans(bsts_forecast$distribution), last_gdp)
+bsts_lower <- integrate_forecast(apply(bsts_forecast$distribution, 2, quantile, 0.025), last_gdp)
+bsts_upper <- integrate_forecast(apply(bsts_forecast$distribution, 2, quantile, 0.975), last_gdp)
+
+# Forecast data preparation
+last_date <- tail(gdp_data$date, 1)
+forecast_dates <- seq(last_date + 91, by = "quarter", length.out = 11)
+
+# Future Net Export differences
+last_netexport <- tail(gdp_data$Net_Export, 4)
+future_netexport <- rep(mean(last_netexport), 15)
+future_netexport_diff <- diff(c(last_netexport, future_netexport), lag = 4)[1:11]
+future_netexport_scaled <- (future_netexport_diff - netexport_diff_mean) / netexport_diff_sd
+
+forecast_data <- data.frame(NetExport_scaled = future_netexport_scaled)
+
+# Generate forecasts for SARIMAX models
+generate_bayes_forecast <- function(model, forecast_data, last_gdp) {
+    preds <- predict(model, newdata = forecast_data)
+    
+    # Convert to original differenced scale
+    estimate <- preds[, "Estimate"] * gdp_diff_sd + gdp_diff_mean
+    q2.5 <- preds[, "Q2.5"] * gdp_diff_sd + gdp_diff_mean
+    q97.5 <- preds[, "Q97.5"] * gdp_diff_sd + gdp_diff_mean
+    
+    # Integrate to original GDP scale
+    list(
+        point = integrate_forecast(estimate, last_gdp),
+        lower = integrate_forecast(q2.5, last_gdp),
+        upper = integrate_forecast(q97.5, last_gdp)
+    )
+}
+
+auto_forecast <- generate_bayes_forecast(bayes_auto, forecast_data, last_gdp)
+manual_forecast <- generate_bayes_forecast(bayes_manual, forecast_data, last_gdp)
+
+# Create forecast data frame
+forecast_df <- data.frame(
+    Date = forecast_dates,
+    BSTS_point = bsts_point,
+    BSTS_lower = bsts_lower,
+    BSTS_upper = bsts_upper,
+    Auto_point = auto_forecast$point,
+    Auto_lower = auto_forecast$lower,
+    Auto_upper = auto_forecast$upper,
+    Manual_point = manual_forecast$point,
+    Manual_lower = manual_forecast$lower,
+    Manual_upper = manual_forecast$upper
+)
+
+# Create main forecast plot
+forecast_plot <- ggplot() +
+    geom_line(data = gdp_data, aes(x = date, y = GDP_Growth), color = "black", linewidth = 1) +
+    geom_line(data = forecast_df, aes(x = Date, y = BSTS_point), color = "blue", linewidth = 1, linetype = "dashed") +
+    geom_ribbon(data = forecast_df, aes(x = Date, ymin = BSTS_lower, ymax = BSTS_upper), 
+                fill = "blue", alpha = 0.2) +
+    geom_line(data = forecast_df, aes(x = Date, y = Auto_point), color = "red", linewidth = 1, linetype = "dashed") +
+    geom_ribbon(data = forecast_df, aes(x = Date, ymin = Auto_lower, ymax = Auto_upper), 
+                fill = "red", alpha = 0.2) +
+    geom_line(data = forecast_df, aes(x = Date, y = Manual_point), color = "green", linewidth = 1, linetype = "dashed") +
+    geom_ribbon(data = forecast_df, aes(x = Date, ymin = Manual_lower, ymax = Manual_upper), 
+                fill = "green", alpha = 0.2) +
+    labs(title = "Malaysia Quarterly GDP Growth Forecast (2025Q2-2027Q4)",
+         subtitle = "Blue: Bayesian Holt-Winters | Red: Bayesian Auto-SARIMAX | Green: Bayesian Manual-SARIMAX",
+         y = "GDP Growth Rate (%)", x = "Date") +
+    geom_vline(xintercept = last_date, linetype = "dashed", color = "darkred") +
+    scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "white", colour = NA),
+          panel.background = element_rect(fill = "white"))
+
+ggsave("GDP_Forecast_Comparison.png", forecast_plot, width = 10, height = 6, bg = "white")
+
+# Create comprehensive residual diagnostics
+create_residual_plots <- function(residuals, model_name) {
+    # Create data frame
+    df <- data.frame(Index = 1:length(residuals), Residuals = residuals)
+    
+    # Time series plot
+    ts_plot <- ggplot(df, aes(x = Index, y = Residuals)) +
+        geom_line() +
+        geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+        ggtitle("Residuals") +
+        theme_bw() +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              plot.background = element_rect(fill = "white", colour = NA),
+              panel.background = element_rect(fill = "white"),
+              plot.title = element_text(size = 10, hjust = 0.5))
+    
+    # ACF plot
+    acf_data <- acf(residuals, plot = FALSE)
+    acf_df <- with(acf_data, data.frame(lag, acf))
+    acf_plot <- ggplot(acf_df, aes(x = lag, y = acf)) +
+        geom_hline(aes(yintercept = 0)) +
+        geom_segment(aes(xend = lag, yend = 0)) +
+        geom_hline(yintercept = c(-1, 1)*1.96/sqrt(length(residuals)), 
+                   linetype = "dashed", color = "blue") +
+        ggtitle("Residual ACF") +
+        theme_bw() +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              plot.background = element_rect(fill = "white", colour = NA),
+              panel.background = element_rect(fill = "white"),
+              plot.title = element_text(size = 10, hjust = 0.5))
+    
+    # PACF plot
+    pacf_data <- pacf(residuals, plot = FALSE)
+    pacf_df <- data.frame(lag = pacf_data$lag, pacf = pacf_data$acf)
+    pacf_plot <- ggplot(pacf_df, aes(x = lag, y = pacf)) +
+        geom_hline(aes(yintercept = 0)) +
+        geom_segment(aes(xend = lag, yend = 0)) +
+        geom_hline(yintercept = c(-1, 1)*1.96/sqrt(length(residuals)), 
+                   linetype = "dashed", color = "blue") +
+        ggtitle("Residual PACF") +
+        theme_bw() +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              plot.background = element_rect(fill = "white", colour = NA),
+              panel.background = element_rect(fill = "white"),
+              plot.title = element_text(size = 10, hjust = 0.5))
+    
+    # QQ plot
+    qq_plot <- ggplot(df, aes(sample = Residuals)) +
+        stat_qq() +
+        stat_qq_line() +
+        ggtitle("QQ Plot") +
+        theme_bw() +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              plot.background = element_rect(fill = "white", colour = NA),
+              panel.background = element_rect(fill = "white"),
+              plot.title = element_text(size = 10, hjust = 0.5))
+    
+    # Ljung-Box test
+    lb_test <- Box.test(residuals, lag = 4, type = "Ljung-Box")
+    
+    list(ts_plot = ts_plot, 
+         acf_plot = acf_plot, 
+         pacf_plot = pacf_plot,
+         qq_plot = qq_plot,
+         lb_pvalue = lb_test$p.value)
+}
+
+# Collect residuals
+res_bsts <- colMeans(bsts_model$one.step.prediction.errors)
+res_auto <- residuals(bayes_auto)[, "Estimate"]
+res_manual <- residuals(bayes_manual)[, "Estimate"]
+
+# Create diagnostic plots for each model
+diag_bsts <- create_residual_plots(res_bsts, "Bayesian Holt-Winters")
+diag_auto <- create_residual_plots(res_auto, "Auto-SARIMAX")
+diag_manual <- create_residual_plots(res_manual, "Manual-SARIMAX")
+
+# Create model title annotations
+bsts_title <- text_grob("Bayesian Holt-Winters", face = "bold", size = 12)
+auto_title <- text_grob("Bayesian Auto-SARIMAX", face = "bold", size = 12)
+manual_title <- text_grob("Bayesian Manual-SARIMAX", face = "bold", size = 12)
+
+# Combine all diagnostic plots with model titles
+diagnostic_plots <- ggarrange(
+    # Bayesian Holt-Winters row
+    ggarrange(
+        bsts_title, NULL, NULL, NULL, ncol = 4, heights = c(0.5, 4)
+    ),
+    ggarrange(
+        diag_bsts$ts_plot, diag_bsts$acf_plot, diag_bsts$pacf_plot, diag_bsts$qq_plot,
+        ncol = 4
+    ),
+    
+    # Auto-SARIMAX row
+    ggarrange(
+        auto_title, NULL, NULL, NULL, ncol = 4, heights = c(0.5, 4)
+    ),
+    ggarrange(
+        diag_auto$ts_plot, diag_auto$acf_plot, diag_auto$pacf_plot, diag_auto$qq_plot,
+        ncol = 4
+    ),
+    
+    # Manual-SARIMAX row
+    ggarrange(
+        manual_title, NULL, NULL, NULL, ncol = 4, heights = c(0.5, 4)
+    ),
+    ggarrange(
+        diag_manual$ts_plot, diag_manual$acf_plot, diag_manual$pacf_plot, diag_manual$qq_plot,
+        ncol = 4
+    ),
+    
+    nrow = 6, heights = c(0.5, 4, 0.5, 4, 0.5, 4)
+)
+
+diagnostic_plots <- annotate_figure(diagnostic_plots, 
+                                    top = text_grob("Residual Diagnostics", 
+                                                    face = "bold", size = 16)) +
+    theme(plot.background = element_rect(fill = "white", colour = NA))
+
+# Add column headers
+column_titles <- ggarrange(
+    text_grob("Time Series", face = "bold", size = 12),
+    text_grob("ACF", face = "bold", size = 12),
+    text_grob("PACF", face = "bold", size = 12),
+    text_grob("QQ Plot", face = "bold", size = 12),
+    ncol = 4
+)
+
+final_diagnostic_plot <- ggarrange(
+    column_titles,
+    diagnostic_plots,
+    nrow = 2, heights = c(0.5, 10)
+)
+
+ggsave("Model_Diagnostics.png", final_diagnostic_plot, width = 16, height = 14, bg = "white")
+
+# Print diagnostic results
+cat("\n=== Stationarity Tests ===\n")
+cat("ADF Test - Original GDP: p-value =", adf_original$p.value, "\n")
+cat("ADF Test - Seasonally Differenced GDP: p-value =", adf_diff$p.value, "\n")
+
+cat("\n=== Ljung-Box Test Results ===\n")
+cat("Bayesian Holt-Winters: p-value =", diag_bsts$lb_pvalue, "\n")
+cat("Auto-SARIMAX: p-value =", diag_auto$lb_pvalue, "\n")
+cat("Manual-SARIMAX: p-value =", diag_manual$lb_pvalue, "\n")
+
+cat("\n=== Model Orders ===\n")
+cat("Auto-SARIMAX: p =", p_order, "q =", q_order, "\n")
+
+# Save results
+write.csv(forecast_df, "Malaysia_GDP_Forecast_Results.csv", row.names = FALSE)
+
+# Print success message
+cat("\nAnalysis completed successfully! Files created:\n")
+cat("- GDP_Forecast_Comparison.png\n")
+cat("- ACF_PACF_Plots.png (for differenced GDP)\n")
+cat("- Model_Diagnostics.png (4 residual plots per model)\n")
+cat("- Malaysia_GDP_Forecast_Results.csv\n")
