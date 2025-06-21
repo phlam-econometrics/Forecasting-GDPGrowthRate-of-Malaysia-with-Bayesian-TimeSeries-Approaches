@@ -1,15 +1,19 @@
-# Abstract
+# Forecasting GDP Growth Rate of Malaysia with Bayesian Time Series Approaches: From 2025 Q2 to 2027 Q4
+
+
+
+## Abstract
 This project is for forecasting the 2025 Q2 to 2027 Q4 GDP growth rate of Malaysia.
 
-# Introduction
+## Introduction
 The project analysed the data of Malaysia's GDP growth rate from 2015 Q2 to 2025 Q1 and forecast the GDP growth rate of Malaysia from 2025 Q2 to 2027 Q4 with Bayesian time series approaches.
 
-# Data Source
+## Data Source
 Series: Rate of Quarterly GDP Growth & Monthly Trade by SITC Section <br/>
 Period: 2015 Q2 to 2025 Q1 <br/>
 Source: Malaysia's Official Open Data Portal
 
-# Literature Review 
+## Literature Review 
 
 Forecasting Malaysia's GDP growth rate is essential for economy to plan their development and fiscal policy, a macroeconometric forecast helps analyse the economic growth of Malaysia. <br/>
 
@@ -17,7 +21,7 @@ Export in Malaysia has a positive effect to GDP growth and the import has a nega
 
 The gap of this research project is that there is lack of forecast in GDP growth rate of Malaysia in time series analysis with structural break (e.g. COVID-19 Pandemic), the prediction included the Bayesian-SARIMAX model and Holt-Winter exponential smoothing to forecast the data of GDP growth rate, with a short-term forecast of 11 quarters.
 
-# Methodology
+## Methodology
 
 The data is collected from Malaysia's Official Open Data Portal. <br/>
 
@@ -45,7 +49,7 @@ For diagnostic, applied Holt-Winters exponential smoothing, Bayesian Auto SARIMA
 
 With the historical data, forecasted the GDP Growth Rate of Malaysia in 2025 Q2 to 2027 Q4 through R.
 
-# Observation
+## Observation
 
 Original GDP Series p-value: 0.2328943<br/>
 
@@ -83,17 +87,17 @@ Former Case: During COVID-19 lockdown in 2020, the manufacturing industry stoppe
 
 Current Case: A sudden rise of manufacturing possibly due to the new goods or the natural resources that can only be produce/extract in Malaysia, will lead to another rise of GDP growth rate.<br/>
 
-# Suggestion
+## Suggestion
 
 Higher input on non-manufacturing industries such as tourism can help the economy have a better performance than before, avoid having recession in some specific seasons.
 
-# Conclusion
+## Conclusion
 
 With the forecasting, it is possible to predict the coming 11 quarters GDP growth rate performance from 2025 Q2 to 2027 Q4, but for the period after 2027, since we do not have enough data, predicting for a longer period will lead to lower accuracy. <br/>
 
 Although the model predicted the GDP growth rate only have slight differences compare to the pre-2020 era, but it is just built on the average prediction, with the Bayesian SARIMAX model, in fact, the potential GDP growth in Malaysia can up to 25% (based on the maximum area of three forecasting methods overlapped).
 
-# References
+## References
 
 https://data.gov.my/data-catalogue/gdp_qtr_real?series=growth-qoq&visual=value <br/>
 
