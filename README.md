@@ -77,7 +77,7 @@ Which might implies that in Malaysia, some seasons are not producing those produ
 
 With the historical data, the forecast of coming 11 lags (i.e. 11 quarters) show that the GDP growth rate of Malaysia will oscillate according to the Bayesian Holt-Winter and Bayesian auto/manual SARIMAX.<br/>
 
-But it is possible to have a sudden rise similar to the pandemic period, but it possibly caused by the government policy<br/>
+But it is possible to have a sudden rise similar to the pandemic period, but it possibly caused by the government policy.<br/>
 
 Former Case: During COVID-19 lockdown in 2020, the manufacturing industry stopped producing, after lockdown, the accumulated orders led to the rise of GDP growth rate since the production rises.<br/>
 
